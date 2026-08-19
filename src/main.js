@@ -54,10 +54,9 @@ function renderBalloon(svgEl, progress01, targetR) {
   const cx = 130;
   const cy = 92;
 
-  // Map r (cm proxy) to pixels.
-  // Adjust scale so values are visible.
-  const pxPerCm = 520; // tuning constant
-  const rPx = targetR * pxPerCm * progress01;
+  // Map r (cm proxy) to pixels, adjusted for the 260x220 viewBox
+const pxPerCm = 35; 
+const rPx = targetR * pxPerCm * progress01;
 
   // Safety minimum
   const rp = Math.max(1, rPx);
