@@ -55,7 +55,7 @@ function renderBalloon(svgEl, progress01, targetR) {
   const cy = 92;
 
   // Map r (cm proxy) to pixels, adjusted for the 260x220 viewBox
-  const pxPerCm = 35; 
+  const pxPerCm = 180; 
   const rPx = targetR * pxPerCm * progress01;
 
   // Safety minimum
