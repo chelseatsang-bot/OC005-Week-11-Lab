@@ -55,8 +55,8 @@ function renderBalloon(svgEl, progress01, targetR) {
   const cy = 92;
 
   // Map r (cm proxy) to pixels, adjusted for the 260x220 viewBox
-const pxPerCm = 35; 
-const rPx = targetR * pxPerCm * progress01;
+  const pxPerCm = 35; 
+  const rPx = targetR * pxPerCm * progress01;
 
   // Safety minimum
   const rp = Math.max(1, rPx);
@@ -130,14 +130,13 @@ function syncSliderAndNumber(rangeId, numId) {
   numEl.addEventListener("input", setFromNum);
 }
 
-// Tube configuration (matches updated HTML: Tubes 1–2 Li only, Tubes 3–4 Na only)
+// Tube configuration
 const tubes = [
-  { liG: "liG1", liG_num: "liG1_num", liRead: null, naG: null, svg: "svg1", circ: "circ_1" },
-  { liG: "liG2", liG_num: "liG2_num", liRead: null, naG: null, svg: "svg2", circ: "circ_2" },
-  { liG: null,   liG_num: null,   liRead: null, naG: "naG3", naG_num: "naG3_num", svg: "svg3", circ: "circ_3" },
-  { liG: null,   liG_num: null,   liRead: null, naG: "naG4", naG_num: "naG4_num", svg: "svg4", circ: "circ_4" }
+  { type: 'li', range: "liG1", num: "liG1_num", svg: "svg1", circ: "circ_1" },
+  { type: 'li', range: "liG2", num: "liG2_num", svg: "svg2", circ: "circ_2" },
+  { type: 'na', range: "naG3", num: "naG3_num", svg: "svg3", circ: "circ_3" },
+  { type: 'na', range: "naG4", num: "naG4_num", svg: "svg4", circ: "circ_4" }
 ];
-let lastTarget = [0,0,0,0];
 
 function updateReadouts() {
   const nCitric = Number($("citricMol").value);
@@ -146,26 +145,23 @@ function updateReadouts() {
   const kV = Number($("kV").value);
   const safeKV = isFinite(kV) && kV > 0 ? kV : 0;
 
-  tubes.forEach((t, i) => {
-    const liMassG = t.liG ? Number($(t.liG).value) : 0;
-const naMassG = t.naG ? Number($(t.naG).value) : 0;
+  tubes.forEach((t) => {
+    const massG = Number($(t.range).value);
 
-    const { nLi, nNa, nCO2 } = computeCO2({
+    const liMassG = t.type === 'li' ? massG : 0;
+    const naMassG = t.type === 'na' ? massG : 0;
+
+    const { nCO2 } = computeCO2({
       nCitricPer15mL: safeNC,
       liMassG,
       naMassG
     });
 
-    // Output readouts (only the one you kept in the HTML)
-    if (t.liRead) $(t.liRead).textContent = `Mol from grams: ${t.liG ? nLi.toFixed(4) : ""}`;
-    if (t.naRead) $(t.naRead).textContent = `Mol from grams: ${nNa.toFixed(4)}`;
-
-    const { C } = computeCircumferenceCm(nCO2, safeKV);
+    const { C, r } = computeCircumferenceCm(nCO2, safeKV);
     $(t.circ).textContent = `${C.toFixed(2)} cm`;
 
-    // Render preview
-const { r } = computeCircumferenceCm(nCO2, safeKV);
-renderBalloon($(t.svg), 1, r);
+    // Render preview preview
+    renderBalloon($(t.svg), 1, r);
   });
 }
 
@@ -178,31 +174,22 @@ function runReaction() {
   const safeKV = isFinite(kV) && kV > 0 ? kV : 0;
 
   tubes.forEach((t) => {
-    const liMassG = t.liG ? Number($(t.liG).value) : 0;
-    const naMassG = t.naG ? Number($(t.naG).value) : 0;
+    const massG = Number($(t.range).value);
+    const liMassG = t.type === 'li' ? massG : 0;
+    const naMassG = t.type === 'na' ? massG : 0;
 
-    const { nCO2, nLi, nNa } = computeCO2({
+    const { nCO2 } = computeCO2({
       nCitricPer15mL: safeNC,
       liMassG,
       naMassG
     });
 
-    const { r } = computeCircumferenceCm(nCO2, safeKV);
+    const { C, r } = computeCircumferenceCm(nCO2, safeKV);
 
     // Animate
     animateBalloon($(t.svg), r, gradual);
 
-    // Update output text
-    if (t.liRead) {
-      const { nLi: nLiNow } = computeCO2({ nCitricPer15mL: safeNC, liMassG, naMassG });
-      $(t.liRead).textContent = `Mol from grams: ${nLiNow.toFixed(4)}`;
-    }
-    if (t.naRead) {
-      const { nNa: nNaNow } = computeCO2({ nCitricPer15mL: safeNC, liMassG, naMassG });
-      $(t.naRead).textContent = `Mol from grams: ${nNaNow.toFixed(4)}`;
-    }
-
-    $(t.circ).textContent = `${computeCircumferenceCm(nCO2, safeKV).C.toFixed(2)} cm`;
+    $(t.circ).textContent = `${C.toFixed(2)} cm`;
   });
 }
 
@@ -221,18 +208,12 @@ function resetAll() {
 }
 
 function init() {
-  // Tubes 1–2: Li sliders
-  syncSliderAndNumber("liG1", "liG1_num");
-  syncSliderAndNumber("liG2", "liG2_num");
-
-  // Tubes 3–4: Na sliders
-  syncSliderAndNumber("naG3", "naG3_num");
-  syncSliderAndNumber("naG4", "naG4_num");
+  // Bind all 4 slider/number pairs
+  tubes.forEach(t => syncSliderAndNumber(t.range, t.num));
 
   $("runBtn").addEventListener("click", runReaction);
   $("resetBtn").addEventListener("click", resetAll);
 
-  // Initial draw and readout
   updateReadouts();
 }
 
