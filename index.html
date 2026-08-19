@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Carbonate + Citric Acid Balloon Simulator</title>
+  <style>
+    :root { --bg:#0b1220; --card:#121b2f; --muted:#9fb0d0; --text:#e9f1ff; --accent:#5dd6ff; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 18px; }
+    h1 { font-size: 18px; margin: 0 0 10px; font-weight: 700; }
+    .grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 14px; align-items: start; }
+    .card { background: var(--card); border: 1px solid #1f2a45; border-radius: 12px; padding: 14px; }
+    .tubeGrid { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .tube { position: relative; padding: 12px; border-radius: 12px; border: 1px solid #1f2a45; background: rgba(18,27,47,0.6); }
+    .tube h3 { margin: 0 0 8px; font-size: 14px; color: var(--accent); }
+    label { display:block; font-size: 12px; color: var(--muted); margin-top: 10px; }
+    input[type="range"] { width: 100%; }
+    .row { display:flex; gap: 10px; align-items:center; }
+    .num { width: 90px; background:#0d1730; color: var(--text); border:1px solid #223056; border-radius:8px; padding:6px 8px; }
+    .btnRow { display:flex; gap:10px; flex-wrap: wrap; margin-top: 10px; }
+    button { cursor:pointer; background:#1d2a4c; color: var(--text); border:1px solid #2a3a66; border-radius: 10px; padding: 9px 12px; font-weight: 600; }
+    button.primary { background: rgba(93,214,255,0.15); border-color: rgba(93,214,255,0.45); }
+    .small { font-size: 12px; color: var(--muted); }
+    .out { margin-top: 10px; font-size: 13px; line-height: 1.35; }
+    .out .k { color: var(--muted); }
+    .viz { margin-top: 10px; display:flex; justify-content:center; }
+    svg { background: #0b1220; border: 1px solid #1f2a45; border-radius: 10px; }
+    .legend { display:flex; justify-content: space-between; gap: 12px; margin-top: 10px; }
+    .pill { background:#0d1730; border: 1px solid #223056; padding: 6px 10px; border-radius: 999px; font-size:12px; color: var(--muted); }
+    .twoCols { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .toggle { display:flex; align-items:center; gap:10px; margin-top: 8px; }
+    .toggle input { transform: scale(1.15); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Citric Acid + Carbonates → CO₂ Balloon Simulator</h1>
+
+    <div class="grid">
+      <div class="card">
+        <div class="twoCols">
+          <div>
+            <label>Citric acid: moles per 15 mL portion</label>
+            <div class="row">
+              <input id="citricMol" class="num" type="number" step="0.0001" min="0" value="0.04625" />
+            </div>
+          </div>
+          <div>
+            <label>Inflation mode</label>
+            <div class="toggle">
+              <input id="gradual" type="checkbox" />
+              <span class="small">Gradual (animate)</span>
+            </div>
+            <label>Visualization constant kV (volume proxy)</label>
+            <div class="row">
+              <input id="kV" class="num" type="number" step="0.0001" min="0" value="0.002" />
+            </div>
+          </div>
+        </div>
+
+        <div class="btnRow">
+          <button class="primary" id="runBtn">Run Reaction</button>
+          <button id="resetBtn">Reset</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="legend">
+          <div class="pill">Output: predicted maximum circumference</div>
+          <div class="pill">Units: cm</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:14px;"></div>
+
+    <div class="tubeGrid">
+      <!-- Tube templates -->
+      <div class="tube" id="tube1">
+        <h3>Tube 1 (LiMol)</h3>
+
+        <label>Li₂CO₃ grams</label>
+        <input id="liG1" type="range" min="0" max="20" step="0.01" value="2.00" />
+        <div class="row" style="justify-content:space-between; margin-top:6px;">
+          <input id="liG1_num" class="num" type="number" step="0.01" min="0" value="2.00" />
+        </div>
+
+        <div class="out">
+          <div><span class="k">Max circumference:</span> <span id="circ_1">—</span></div>
+        </div>
+
+        <div class="viz">
+          <svg id="svg1" width="260" height="220" viewBox="0 0 260 220" aria-label="Balloon visualization"></svg>
+        </div>
+      </div>
+
+      <div class="tube" id="tube2">
+        <h3>Tube 2 (LiMass)</h3>
+
+        <label>Li₂CO₃ grams</label>
+        <input id="liG2" type="range" min="0" max="20" step="0.01" value="2.00" />
+        <div class="row" style="justify-content:space-between; margin-top:6px;">
+          <input id="liG2_num" class="num" type="number" step="0.01" min="0" value="2.00" />
+        </div>
+
+        <div class="out">
+          <div><span class="k">Max circumference:</span> <span id="circ_2">—</span></div>
+        </div>
+
+        <div class="viz">
+          <svg id="svg2" width="260" height="220" viewBox="0 0 260 220"></svg>
+        </div>
+      </div>
+
+      <div class="tube" id="tube3">
+        <h3>Tube 3 (NaMol)</h3>
+
+        <label>Na₂CO₃ grams</label>
+        <input id="naG3" type="range" min="0" max="20" step="0.01" value="2.00" />
+        <div class="row" style="justify-content:space-between; margin-top:6px;">
+          <input id="naG3_num" class="num" type="number" step="0.01" min="0" value="2.00" />
+        </div>
+
+        <div class="out">
+          <div><span class="k">Max circumference:</span> <span id="circ_3">—</span></div>
+        </div>
+
+        <div class="viz">
+          <svg id="svg3" width="260" height="220" viewBox="0 0 260 220"></svg>
+        </div>
+      </div>
+
+      <div class="tube" id="tube4">
+        <h3>Tube 4 (NaMass)</h3>
+
+        <label>Na₂CO₃ grams</label>
+        <input id="naG4" type="range" min="0" max="20" step="0.01" value="2.00" />
+        <div class="row" style="justify-content:space-between; margin-top:6px;">
+          <input id="naG4_num" class="num" type="number" step="0.01" min="0" value="2.00" />
+        </div>
+
+        <div class="out">
+          <div><span class="k">Max circumference:</span> <span id="circ_4">—</span></div>
+        </div>
+
+        <div class="viz">
+          <svg id="svg4" width="260" height="220" viewBox="0 0 260 220"></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+  </script>
+<script type="module" src="./src/main.js"></script>
