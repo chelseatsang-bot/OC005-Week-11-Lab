@@ -165,7 +165,8 @@ const naMassG = t.naG ? Number($(t.naG).value) : 0;
     $(t.circ).textContent = `${C.toFixed(2)} cm`;
 
     // Render preview
-    renderBalloon($(t.svg), 1, Math.pow(kV * nCO2, 1/3));
+const { r } = computeCircumferenceCm(nCO2, safeKV);
+renderBalloon($(t.svg), 1, r);;
   });
 }
 
